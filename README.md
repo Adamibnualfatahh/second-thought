@@ -68,5 +68,5 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 <p align="center">
-  Made with ❤️ by Adam Ibnualfatah
+  Made with ❤️ by Adam Ibnu Alfatah
 </p>
