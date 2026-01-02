@@ -104,20 +104,31 @@ const NotificationRequestBanner: React.FC = () => {
     const [showPermissionRequest, setShowPermissionRequest] = useState(false);
 
     useEffect(() => {
-        // Check notification permission on mount
-        if (Notification.permission === 'default') {
+        // Check notification permission on mount, ensuring API exists
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
             setShowPermissionRequest(true);
         }
     }, []);
 
     const requestNotification = async () => {
-        const result = await Notification.requestPermission();
-        if (result === 'granted') {
-            setShowPermissionRequest(false);
-            // Test notification
-            new Notification("Notifikasi Aktif!", { body: "Kami akan kabari saat waktunya tiba.", icon: "https://picsum.photos/192/192" });
-        } else {
-            // User denied or dismissed, hide banner to not annoy
+        if (!('Notification' in window)) return;
+
+        try {
+            const result = await Notification.requestPermission();
+            if (result === 'granted') {
+                setShowPermissionRequest(false);
+                // Test notification
+                try {
+                    new Notification("Notifikasi Aktif!", { body: "Kami akan kabari saat waktunya tiba.", icon: "https://picsum.photos/192/192" });
+                } catch (e) {
+                    console.error("Notification creation failed", e);
+                }
+            } else {
+                // User denied or dismissed
+                setShowPermissionRequest(false);
+            }
+        } catch (error) {
+            console.error("Notification permission request failed", error);
             setShowPermissionRequest(false);
         }
     };
@@ -578,9 +589,13 @@ const ReflectionScreen: React.FC<{
     const [reflection, setReflection] = useState('');
 
     const handleStart = async () => {
-        // Request notification permission if not granted
-        if (Notification.permission === 'default') {
-            await Notification.requestPermission();
+        // Request notification permission if not granted and supported
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+            try {
+                await Notification.requestPermission();
+            } catch (e) {
+                console.error("Failed to request permission", e);
+            }
         }
 
         const finalDecision = {
@@ -674,11 +689,15 @@ const WaitingScreen: React.FC<{
                 if (!notified) {
                     setNotified(true);
                     // Browser Notification
-                    if (Notification.permission === 'granted') {
-                        new Notification("Waktu Habis! ⏰", {
-                            body: "Saatnya kembali ke SecondThought untuk keputusanmu.",
-                            icon: "https://picsum.photos/192/192" // Placeholder icon
-                        });
+                    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+                        try {
+                            new Notification("Waktu Habis! ⏰", {
+                                body: "Saatnya kembali ke SecondThought untuk keputusanmu.",
+                                icon: "https://picsum.photos/192/192" // Placeholder icon
+                            });
+                        } catch (e) {
+                            console.error("Failed to create notification", e);
+                        }
                     }
                     // Audio Alarm Loop
                     audioRef.current.loop = true;
